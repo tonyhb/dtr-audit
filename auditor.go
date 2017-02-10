@@ -71,6 +71,8 @@ func (a *Auditor) Run() error {
 		// auditRemainingAccounts fetches accounts that have access to
 		// no repos
 		a.auditRemainingAccounts,
+
+		a.addPublicRepos,
 	}
 
 	for _, f := range chain {
@@ -83,7 +85,6 @@ func (a *Auditor) Run() error {
 }
 
 func (a *Auditor) auditAllRepos() error {
-	fmt.Println("requesting all repos")
 	repos, err := a.fetchAllRepos()
 	if err != nil {
 		return err
@@ -120,18 +121,14 @@ func (a *Auditor) auditAllRepos() error {
 		// we can add this to every user as read-only in the
 		// future
 		if repo.Visibility == VisibilityPublic {
+			repo.Level = ReadOnly
 			a.publicRepos = append(a.publicRepos, repo)
 		}
 	}
-
-	fmt.Printf(" > found %d repositories\n", len(repos))
-	fmt.Printf(" > found %d users\n", len(a.Users))
-	fmt.Printf(" > found %d orgs\n", len(a.Orgs))
 	return nil
 }
 
 func (a *Auditor) auditOrgs() error {
-	fmt.Println("auditing all organizations; this may take a while...")
 	for orgName, _ := range a.Orgs {
 		// fetch the org's teams
 		teams, err := a.fetchTeamsForOrg(orgName)
@@ -191,7 +188,6 @@ func (a *Auditor) auditTeam(orgName string, team Team) error {
 
 // auditAccounts pulls all users and organizations from the API
 func (a *Auditor) auditRemainingAccounts() error {
-	fmt.Println("fetching remaining accounts")
 	accts, err := a.fetchAccounts()
 	if err != nil {
 		return err
@@ -208,7 +204,6 @@ func (a *Auditor) auditRemainingAccounts() error {
 			}
 		} else {
 			if _, ok := a.Users[acc.Name]; !ok {
-				fmt.Println(" > found new user with no repos")
 				a.Users[acc.Name] = &User{
 					ID:      acc.ID,
 					Name:    acc.Name,
@@ -218,6 +213,16 @@ func (a *Auditor) auditRemainingAccounts() error {
 				a.Users[acc.Name].IsAdmin = acc.IsAdmin
 				a.Users[acc.Name].ID = acc.ID
 			}
+		}
+	}
+	return nil
+}
+
+func (a *Auditor) addPublicRepos() error {
+	for _, repo := range a.publicRepos {
+		for _, u := range a.Users {
+			repo.Level = ReadOnly
+			u.AddRepo(repo)
 		}
 	}
 	return nil
