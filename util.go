@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 // retry retries a function that produces an error up to 3 times with 5 second
 // breaks before finally returning the last error trapped.
 func retry(f func() error) (err error) {
@@ -10,7 +12,7 @@ func retry(f func() error) (err error) {
 		}
 
 		// pause
-		// <-time.After(5 * time.Second)
+		<-time.After(5 * time.Second)
 	}
 
 	// return the last error, or nil, caught by the function passed in
