@@ -32,7 +32,7 @@ type Auditor struct {
 	// Users is a map Users keyed by user name as a pointer for mutations
 	Users map[string]*User `json:"users"`
 	// Orgs is a map Orgs keyed by org name as a pointer for mutations
-	Orgs map[string]*Org `json:"orgs"`
+	Orgs map[string]*Org `json:"-"`
 
 	// publicRepos represents public repositories found while accessing
 	// every user or org's repos.  Storing them here allows us to skip
